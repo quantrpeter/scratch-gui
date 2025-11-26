@@ -102,7 +102,12 @@ class Blocks extends React.Component {
         const workspaceConfig = defaultsDeep({},
             Blocks.defaultOptions,
             this.props.options,
-            {rtl: this.props.isRtl, toolbox: this.props.toolboxXML, colours: getColorsForTheme(this.props.theme)}
+            {
+                rtl: this.props.isRtl,
+                toolbox: this.props.toolboxXML,
+                colours: getColorsForTheme(this.props.theme),
+                media: '/scratch/static/blocks-media/default/'
+            }
         );
         this.workspace = this.ScratchBlocks.inject(this.blocks, workspaceConfig);
 

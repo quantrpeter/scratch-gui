@@ -182,6 +182,7 @@ class MenuBar extends React.Component {
             'handleClickRemix',
             'handleClickSave',
             'handleClickSaveAsCopy',
+            'handleClickSaveToServer',
             'handleClickSeeCommunity',
             'handleClickShare',
             'handleSetMode',
@@ -222,6 +223,66 @@ class MenuBar extends React.Component {
     }
     handleClickSaveAsCopy () {
         this.props.onClickSaveAsCopy();
+        this.props.onRequestCloseFile();
+    }
+    handleClickSaveToServer () {
+        // Get the project data from the VM
+        this.props.vm.saveProjectSb3().then(content => {
+            // Convert ArrayBuffer to base64
+            const base64Content = btoa(
+                new Uint8Array(content).reduce((data, byte) => data + String.fromCharCode(byte), '')
+            );
+            
+            // Get current project info from localStorage or props
+            const currentProjectId = localStorage.getItem('currentProjectId') || null;
+            const currentProjectName = localStorage.getItem('currentProjectName') || this.props.projectTitle || 'Untitled';
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            
+            // Prepare data for the server
+            const data = {
+                _token: csrfToken,
+                type: 'microPython',
+                content: base64Content,
+                name: currentProjectName
+            };
+            
+            if (currentProjectId) {
+                data.project_id = currentProjectId;
+            }
+            
+            // Send to server
+            fetch('/project/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.result === 'ok') {
+                    alert('Save successfully');
+                    // Update localStorage with the new project info
+                    if (result.project && result.project.id) {
+                        localStorage.setItem('currentProjectId', result.project.id);
+                        localStorage.setItem('currentProjectName', result.project.name);
+                    }
+                } else {
+                    alert('Save failed: ' + result.result);
+                }
+            })
+            .catch(error => {
+                console.error('Save error:', error);
+                alert('Save failed: ' + error.message);
+            });
+        }).catch(error => {
+            console.error('Error getting project data:', error);
+            alert('Failed to get project data: ' + error.message);
+        });
+        
         this.props.onRequestCloseFile();
     }
     handleClickSeeCommunity (waitForUpdate) {
@@ -517,6 +578,13 @@ class MenuBar extends React.Component {
                                                 />
                                             </MenuItem>
                                         )}</SB3Downloader>
+                                        <MenuItem onClick={this.handleClickSaveToServer}>
+                                            <FormattedMessage
+                                                defaultMessage="Save to Server"
+                                                description="Menu bar item for saving project to server"
+                                                id="gui.menuBar.saveToServer"
+                                            />
+                                        </MenuItem>
                                     </MenuSection>
                                 </MenuBarMenu>
                             </div>
