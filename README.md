@@ -1,5 +1,15 @@
 # scratch-gui
 
+# Peter
+
+node 24
+
+```
+npm start
+```
+
+browse to http://localhost:8601/scratch/
+
 ## **⚠️ NOTICE: Repository Migration to Mono-Repo ⚠️**
 
 The Scratch Team has migrated the `scratch-gui` module into a new mono-repo,
